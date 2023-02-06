@@ -2,17 +2,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-### temp ###
-import numpy as np
-test_data, test_label = np.load('processed/data.npy', allow_pickle=True)[0]
-test_data = torch.Tensor(np.expand_dims(np.expand_dims(test_data, 0), 0))
-# B C H W
-############
-
 
 def get_n_params(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
-
 
 class BaselineClassifier(nn.Module):
     def __init__(self):
