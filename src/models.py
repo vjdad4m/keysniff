@@ -6,6 +6,7 @@ import torch.optim as optim
 def get_n_params(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
+
 class BaselineClassifier(nn.Module):
     def __init__(self):
         super().__init__()

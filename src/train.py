@@ -18,10 +18,12 @@ print(f'using {DEVICE = }')
 
 alphabet = string.ascii_lowercase + ' '
 
+
 class KeySniffDataset(Dataset):
     def __init__(self):
         data = np.load('processed/data.npy', allow_pickle=True)
-        self.X = torch.tensor(np.array([np.expand_dims(x, 0) for x in data[:, 0]]))
+        self.X = torch.tensor(
+            np.array([np.expand_dims(x, 0) for x in data[:, 0]]))
         self.Y = torch.zeros((data.shape[0], len(alphabet)))
         for i, j in enumerate(data[:, 1]):
             self.Y[i][j] = 1
@@ -33,9 +35,10 @@ class KeySniffDataset(Dataset):
 
     def __len__(self):
         return self.L
-    
+
     def __getitem__(self, idx):
         return (self.X[idx], self.Y[idx])
+
 
 SPLIT_SIZE = 0.8
 BATCH_SIZE = 16
@@ -51,9 +54,9 @@ val_loader = DataLoader(val_set, BATCH_SIZE, shuffle=True)
 eval_loader = DataLoader(val_set, 1, shuffle=False)
 
 MODEL = BaselineClassifier().to(DEVICE)
-N_EPOCHS = 50
+N_EPOCHS = 100
 LEARNING_RATE = 0.0002
-STEP_SIZE = 5
+STEP_SIZE = 10
 GAMMA = 0.1
 
 OPTIMIZER = optim.Adam(MODEL.parameters(), lr=LEARNING_RATE)
@@ -66,7 +69,7 @@ overall_validation = []
 for epoch in (tq := tqdm.trange(N_EPOCHS)):
     epoch_loss = []
     validation_loss = []
-    
+
     for data, target in train_loader:
         OPTIMIZER.zero_grad()
         output = MODEL(data)
@@ -76,13 +79,13 @@ for epoch in (tq := tqdm.trange(N_EPOCHS)):
 
         loss = loss.item()
         epoch_loss.append(loss)
-    
+
     MODEL.eval()
     with torch.no_grad():
         for data, target in val_loader:
             output = MODEL(data)
             loss = CRITERION(output, target)
-            
+
             loss = loss.item()
             validation_loss.append(loss)
 
