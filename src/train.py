@@ -16,8 +16,20 @@ torch.cuda.manual_seed(SEED)
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(f'using {DEVICE = }')
 
-alphabet = string.ascii_lowercase + ' '
+# hyperparameters
+N_EPOCHS = 100
+LEARNING_RATE = 0.0002
+STEP_SIZE = 10
+GAMMA = 0.1
+DROPOUT = 0.2
+# ---------------
 
+MODEL = BaselineClassifier(dropout=DROPOUT).to(DEVICE)
+OPTIMIZER = optim.Adam(MODEL.parameters(), lr=LEARNING_RATE)
+CRITERION = nn.CrossEntropyLoss()
+SCHEDULER = optim.lr_scheduler.StepLR(OPTIMIZER, STEP_SIZE, GAMMA)
+
+alphabet = string.ascii_lowercase + ' '
 
 class KeySniffDataset(Dataset):
     def __init__(self):
@@ -53,16 +65,6 @@ train_loader = DataLoader(train_set, BATCH_SIZE, shuffle=True)
 val_loader = DataLoader(val_set, BATCH_SIZE, shuffle=True)
 eval_loader = DataLoader(val_set, 1, shuffle=False)
 
-MODEL = BaselineClassifier().to(DEVICE)
-N_EPOCHS = 100
-LEARNING_RATE = 0.0002
-STEP_SIZE = 10
-GAMMA = 0.1
-
-OPTIMIZER = optim.Adam(MODEL.parameters(), lr=LEARNING_RATE)
-CRITERION = nn.CrossEntropyLoss()
-SCHEDULER = optim.lr_scheduler.StepLR(OPTIMIZER, STEP_SIZE, GAMMA)
-
 overall_train = []
 overall_validation = []
 
@@ -81,6 +83,7 @@ for epoch in (tq := tqdm.trange(N_EPOCHS)):
         epoch_loss.append(loss)
 
     MODEL.eval()
+
     with torch.no_grad():
         for data, target in val_loader:
             output = MODEL(data)
@@ -96,8 +99,8 @@ for epoch in (tq := tqdm.trange(N_EPOCHS)):
                 output = MODEL(data)
                 target = target.cpu().detach().numpy()[0]
                 output = output.cpu().detach().numpy()[0]
-                target_loc = np.where(target == np.max(target))[0]
-                output_loc = np.where(output == np.max(output))[0]
+                target_loc = np.where(target == np.max(target))[0][0]
+                output_loc = np.where(output == np.max(output))[0][0]
                 if target_loc == output_loc:
                     acc += 1
             print(f'\naccuracy: {round(acc / q * 100, 3)}%')

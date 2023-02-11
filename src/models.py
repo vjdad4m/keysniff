@@ -8,7 +8,7 @@ def get_n_params(model):
 
 
 class BaselineClassifier(nn.Module):
-    def __init__(self):
+    def __init__(self, dropout=0.0):
         super().__init__()
         self.c1 = nn.Conv2d(1, 32, 3, 1, 1)
         self.c2 = nn.Conv2d(32, 32, 3, 2, 1)
@@ -31,6 +31,7 @@ class BaselineClassifier(nn.Module):
         self.bn5 = nn.BatchNorm2d(256)
 
         self.fc1 = nn.Linear(6144, 512)
+        self.dropout = nn.Dropout(dropout)
         self.fc2 = nn.Linear(512, 27)
 
     def forward(self, x):
@@ -56,6 +57,7 @@ class BaselineClassifier(nn.Module):
 
         x = torch.flatten(x, start_dim=1)
         x = torch.relu(self.fc1(x))
+        x = self.dropout(x)
         x = torch.softmax(self.fc2(x), dim=1)
 
         return x
