@@ -6,7 +6,7 @@ from threading import Thread
 import pyaudio
 import pygame as pg
 
-RECORD_SECONDS = 30
+RECORD_SECONDS = 60
 UUID = str(uuid.uuid4().hex)
 
 

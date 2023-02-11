@@ -30,7 +30,7 @@ class KeySniffDataset(Dataset):
 
 
 MODEL = BaselineClassifier()
-MODEL.load_state_dict(torch.load('models/3.299.pth', map_location=DEVICE))
+MODEL.load_state_dict(torch.load('models/2.52.pth', map_location=DEVICE))
 MODEL = MODEL.to(DEVICE)
 
 DATASET = KeySniffDataset()

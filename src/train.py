@@ -18,11 +18,13 @@ print(f'using {DEVICE = }')
 
 # hyperparameters
 N_EPOCHS = 100
+SPLIT_SIZE = 0.8
+BATCH_SIZE = 16
 LEARNING_RATE = 0.0002
 STEP_SIZE = 10
 GAMMA = 0.1
 DROPOUT = 0.2
-NOISE_RATIO = 0.05
+NOISE_RATIO = 0.08
 # ---------------
 
 MODEL = BaselineClassifier(dropout=DROPOUT).to(DEVICE)
@@ -52,14 +54,11 @@ class KeySniffDataset(Dataset):
     def __getitem__(self, idx):
         return (self.X[idx], self.Y[idx])
 
-
-SPLIT_SIZE = 0.8
-BATCH_SIZE = 16
-
 dataset = KeySniffDataset()
 p = int(len(dataset) * SPLIT_SIZE)
 q = len(dataset) - p
-print(f'dataset size: {len(dataset)}, train-test split: {SPLIT_SIZE * 100}-{round((1-SPLIT_SIZE) * 100, 3)}')
+print(f'dataset size: {len(dataset)}, train-test split: {SPLIT_SIZE * 100} - {round((1-SPLIT_SIZE) * 100, 3)}')
+print(f'training on {p} datapoints, totaling {round(p * 0.5 / 60, 2)} minutes of audio recordings')
 
 train_set, val_set = random_split(dataset, [p, q])
 train_loader = DataLoader(train_set, BATCH_SIZE, shuffle=True)
@@ -94,7 +93,7 @@ for epoch in (tq := tqdm.trange(N_EPOCHS)):
             loss = loss.item()
             validation_loss.append(loss)
 
-    if epoch % 5 == 0 and epoch > 0:
+    if epoch % 10 == 0 and epoch > 0:
         with torch.no_grad():
             acc = 0
             for data, target in eval_loader:
@@ -118,7 +117,17 @@ for epoch in (tq := tqdm.trange(N_EPOCHS)):
 
     SCHEDULER.step()
 
+overall_train = np.array(overall_train)
+overall_validation = np.array(overall_validation)
+
 torch.save(MODEL.state_dict(), f'models/{overall_validation[-1]}.pth')
+
+print(f'\ntraning finished!\nmodel trained for {N_EPOCHS} epochs', \
+    f'\nfinal validation loss: {overall_validation[-1]},', \
+    f'mean validation: {np.mean(overall_validation)}\n', \
+    f'\n-- hyperparameters --\n{LEARNING_RATE = }\n{STEP_SIZE = }', \
+    f'\n{BATCH_SIZE = }\n{SPLIT_SIZE = }\n{GAMMA = }\n{DROPOUT = }', \
+    f'\n{NOISE_RATIO = }', f'\n{"-"*20}')
 
 plt.plot(overall_train)
 plt.plot(overall_validation)
