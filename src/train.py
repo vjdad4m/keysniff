@@ -22,6 +22,7 @@ LEARNING_RATE = 0.0002
 STEP_SIZE = 10
 GAMMA = 0.1
 DROPOUT = 0.2
+NOISE_RATIO = 0.05
 # ---------------
 
 MODEL = BaselineClassifier(dropout=DROPOUT).to(DEVICE)
@@ -73,6 +74,7 @@ for epoch in (tq := tqdm.trange(N_EPOCHS)):
     validation_loss = []
 
     for data, target in train_loader:
+        data = data + torch.randn_like(data) * NOISE_RATIO # add random noise
         OPTIMIZER.zero_grad()
         output = MODEL(data)
         loss = CRITERION(output, target)
