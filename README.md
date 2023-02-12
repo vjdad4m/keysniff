@@ -2,7 +2,7 @@
 
 typed text reconstruction based on audio only
 
-## challanges
+## todo
 
 * [x] data collection
 * [x] data preprocessing
@@ -12,7 +12,7 @@ typed text reconstruction based on audio only
 ## data preprocessing
 
 * sync audio chunks with keypress
-* mel spectrogram
+* create mel spectrogram
 * convert keypress to model targets
 * store results
 
