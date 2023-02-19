@@ -5,9 +5,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def load_data(uuid):
-    sound_file = glob.glob(f'data/{uuid}*.wav')[0]
-    data_file = f'data/{uuid}.csv'
+def load_data(uuid, datafolder='data'):
+    sound_file = glob.glob(f'{datafolder}/{uuid}*.wav')[0]
+    data_file = f'{datafolder}/{uuid}.csv'
 
     sound_start_time = float('.'.join(sound_file.split('_')[1].split('.')[:2]))
 
