@@ -43,16 +43,13 @@ class KeySniffDataset(Dataset):
         for i, j in enumerate(data[:, 1]):
             self.Y[i][j] = 1
 
-        self.X = self.X.to(DEVICE)
-        self.Y = self.Y.to(DEVICE)
-
         self.L = self.X.shape[0]
 
     def __len__(self):
         return self.L
 
     def __getitem__(self, idx):
-        return (self.X[idx], self.Y[idx])
+        return [self.X[idx], self.Y[idx]]
 
 dataset = KeySniffDataset()
 p = int(len(dataset) * SPLIT_SIZE)
@@ -62,11 +59,11 @@ print(f'training on {p} datapoints, totaling {round(p * 0.5 / 60, 2)} minutes of
 
 train_set, val_set = random_split(dataset, [p, q])
 train_loader = DataLoader(train_set, BATCH_SIZE, shuffle=True)
-val_loader = DataLoader(val_set, BATCH_SIZE, shuffle=True)
-eval_loader = DataLoader(val_set, 1, shuffle=False)
+val_loader = DataLoader(val_set, 1, shuffle=False)
 
 overall_train = []
 overall_validation = []
+overall_accuracy = []
 
 for epoch in (tq := tqdm.trange(N_EPOCHS)):
     epoch_loss = []
@@ -74,6 +71,10 @@ for epoch in (tq := tqdm.trange(N_EPOCHS)):
 
     for data, target in train_loader:
         data = data + torch.randn_like(data) * NOISE_RATIO # add random noise
+
+        data = data.to(DEVICE)
+        target = target.to(DEVICE)
+
         OPTIMIZER.zero_grad()
         output = MODEL(data)
         loss = CRITERION(output, target)
@@ -86,39 +87,42 @@ for epoch in (tq := tqdm.trange(N_EPOCHS)):
     MODEL.eval()
 
     with torch.no_grad():
+        acc = 0
         for data, target in val_loader:
+            data = data.to(DEVICE)
+            target = target.to(DEVICE)
+
+
             output = MODEL(data)
             loss = CRITERION(output, target)
 
             loss = loss.item()
             validation_loss.append(loss)
 
-    if epoch % 10 == 0 and epoch > 0:
-        with torch.no_grad():
-            acc = 0
-            for data, target in eval_loader:
-                output = MODEL(data)
-                target = target.cpu().detach().numpy()[0]
-                output = output.cpu().detach().numpy()[0]
-                target_loc = np.where(target == np.max(target))[0][0]
-                output_loc = np.where(output == np.max(output))[0][0]
-                if target_loc == output_loc:
-                    acc += 1
-            print(f'\naccuracy: {round(acc / q * 100, 3)}%')
-
+            target = target.cpu().detach().numpy()[0]
+            output = output.cpu().detach().numpy()[0]
+            target_loc = np.where(target == np.max(target))[0][0]
+            output_loc = np.where(output == np.max(output))[0][0]
+            if target_loc == output_loc:
+                acc += 1
+        
+        accuracy = round(acc / q, 3)
+   
     MODEL.train()
 
     epoch_loss = round(np.mean(epoch_loss), 3)
     validation_loss = round(np.mean(validation_loss), 3)
 
-    tq.set_description(f'train: {epoch_loss} val: {validation_loss}')
+    tq.set_description(f'train: {epoch_loss} val: {validation_loss} accuracy: {accuracy*100}%')
     overall_train.append(epoch_loss)
     overall_validation.append(validation_loss)
+    overall_accuracy.append(accuracy)
 
     SCHEDULER.step()
 
 overall_train = np.array(overall_train)
 overall_validation = np.array(overall_validation)
+overall_accuracy = np.array(overall_accuracy)
 
 torch.save(MODEL.state_dict(), f'models/{overall_validation[-1]}.pth')
 
@@ -131,4 +135,6 @@ print(f'\ntraning finished!\nmodel trained for {N_EPOCHS} epochs', \
 
 plt.plot(overall_train)
 plt.plot(overall_validation)
+plt.show()
+plt.plot(overall_accuracy)
 plt.show()
